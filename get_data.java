@@ -174,7 +174,8 @@ public class get_data
 
 				InputStream is = http.getInputStream();
 				//FileOutputStream os = new FileOutputStream("..\\ggz\\" + args[2] + "\\" + symbol + ".csv");
-				FileOutputStream os = new FileOutputStream(args[2] + "\\" + symbol + ".csv");
+				//FileOutputStream os = new FileOutputStream(args[2] + "\\" + symbol + ".csv");
+				FileOutputStream os = new FileOutputStream(args[2] + "/" + symbol + ".csv");
 				int bytesRead = -1;
 				byte[] buffer = new byte[4096];
 				while ((bytesRead = is.read(buffer)) != -1) {

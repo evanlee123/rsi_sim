@@ -34,4 +34,5 @@ flush $fid_company_list
 close $fid_symbol_list
 close $fid_company_list
 
+exit 0
 
