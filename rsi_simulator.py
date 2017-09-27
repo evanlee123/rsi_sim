@@ -159,6 +159,7 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
     have_money = False
     new_buy = [buy_inter[0]]
     new_sell = []
+    
     curr_index = new_buy[0]
     if buy_on_up == True:
         for item in buy_inter:
@@ -289,6 +290,10 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
             trans.append([ bought,rsi.index[new_buy[number]].strftime('%y-%m-%d'),
                            sell , rsi.index[new_sell[number]].strftime('%y-%m-%d'),
                            change, gain, time.days, gain/time.days])
+    if len(new_buy) == 0:
+        print("No profit for: buy = " + str(buy_rsi) + "sell = " + str(sell_rsi))
+        sys.exit(0)
+   
     if write_trans != None:
         string = write_trans + '.csv'
         with open(string, 'w', newline = '') as csvfile:

@@ -77,9 +77,10 @@ def macro(symbol_list, directory, *args, **kwargs):
                             first_buy = False
                     start_time = time.time()
                     #if number % 10 == 0:
-                    print(number)
+                    
                     buy_rsi = number
                     for integer in range(beg,end):
+                        
                         if load_prog == True and first_sell == True:
                             if str(integer) != str(value[2]):
                                 continue

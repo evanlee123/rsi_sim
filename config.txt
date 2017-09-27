@@ -1,2 +1,5 @@
-try_all_rsi=True, buy_open = True, buy_always_up = True, buy_on_up = True, show_graph = False, write_trans = 'data_in', beg = 30, end = 70, max_profit = True
+try_all_rsi=True, buy_open = True, buy_always_up = True, buy_on_up = True, show_graph = False, write_trans = 'data_in', beg = 30, end = 70, max_profit = True, show_trans = False
  
+
+
+
