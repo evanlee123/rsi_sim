@@ -12,7 +12,6 @@ import numpy as np
 import csv
 import sys
 
-
 style.use('ggplot')
 
 def read_data(some_file):
@@ -70,9 +69,13 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
         except TypeError:
             print('Error with Calculating Adj Open')
             sys.exit()
+
     #sets range
     beg_date =dt.date(1,1,1)
     end_date = dt.date(1,1,2)
+
+
+    #Calculates the starting and ending dates
     try:
         if start_date != None and stop_date != None:
             beg_date =  dt.datetime.strptime(start_date, '%Y-%m-%d')
@@ -82,7 +85,6 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
             if start_date == None:
                 beg_date = rsi.index[0]
                 end_date = dt.datetime.strptime(stop_date, '%Y-%m-%d')
-
             else:
                 beg_date = dt.datetime.strptime(start_date, '%Y-%m-%d')
                 end_date = rsi.index[-1]   
@@ -92,7 +94,8 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
     except IndexError:
         print('One of the files is not filled')
         sys.exit()
-    
+
+    #aligns prices data with rsi data, so that they both start on the beginning date
     while prices.index[0] < beg_date:
         prices.drop(prices.index[0], inplace = True)
     while rsi.index[0] < beg_date:
@@ -102,26 +105,29 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
     while rsi.index[-1] > end_date:
         rsi.drop(rsi.index[-1], inplace = True)
 
-    
     #sets graph size
-    ax1 = plt.subplot2grid((6,1),(0,0),rowspan=5, colspan =1)
-    ax2 = plt.subplot2grid((6,1),(5,0),rowspan=1, colspan =1, sharex = ax1)
+    if show_graph == True:
+        ax1 = plt.subplot2grid((6,1),(0,0),rowspan=5, colspan =1)
+        ax2 = plt.subplot2grid((6,1),(5,0),rowspan=1, colspan =1, sharex = ax1)
 
     #removes offset of dates
     while prices.index[0] < rsi.index[0]:
         prices.drop(prices.index[0], inplace = True)         
 
-    #graphs data
+    #plots data
     try:
         buy_line = [buy_rsi for date in rsi.index]
         sell_line = [sell_rsi for date in rsi.index]
         if buy_open == True or sell_open == True:
-            ax1.plot(prices.index, prices['Adj Open'], 'blue', linewidth = 0.75)
+            if show_graph == True:
+                ax1.plot(prices.index, prices['Adj Open'], 'blue', linewidth = 0.75)
         if (buy_open == False or sell_open == False):
-            ax1.plot(prices.index, prices['Adj Close'], 'black', linewidth = 0.75)
-        ax2.plot(rsi.index,rsi['RSI'], 'black', linewidth = 0.75)
-        ax2.plot(rsi.index,buy_line,'g',
-                 rsi.index,sell_line,'r')
+            if show_graph == True:
+                ax1.plot(prices.index, prices['Adj Close'], 'black', linewidth = 0.75)
+        if show_graph == True:
+            ax2.plot(rsi.index,rsi['RSI'], 'black', linewidth = 0.75)
+            ax2.plot(rsi.index,buy_line,'g',
+                     rsi.index,sell_line,'r')
     except ValueError:
         print('Data Error')
         sys.exit()
@@ -138,7 +144,8 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
     buy_inter1 = 'dummy'
     if buy_option != None:
         buy_line1 = [buy_option for date in rsi.index]
-        ax2.plot(rsi.index,buy_line1, 'g')
+        if show_graph == True:
+            ax2.plot(rsi.index,buy_line1, 'g')
         buy_inter1 = np.argwhere(np.diff(np.sign(buy_line1 - rsi['RSI'])) != 0).reshape(-1) + 0
         buy_inter = np.append(buy_inter0, buy_inter1 )
         buy_inter.sort()
@@ -146,7 +153,8 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
         buy_inter = buy_inter0
     if sell_option != None:
         sell_line1 = [sell_option for date in rsi.index]
-        ax2.plot(rsi.index, sell_line1, 'r')
+        if show_graph == True:
+            ax2.plot(rsi.index, sell_line1, 'r')
         sell_inter1 = np.argwhere(np.diff(np.sign(sell_line1 - rsi['RSI'])) != 0).reshape(-1) + 0
         sell_inter = np.append(sell_inter0, sell_inter1)
         sell_inter.sort()
@@ -307,6 +315,7 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
         csvfile.close()
     if show_profit == True:
         print('Profit:', profit, 'Number of Transactions:', len(new_buy), 'Avg gain', profit/len(new_buy), 'Avg time for transaction:', trans_length.days/len(new_buy)) 
+
     #time_elapsed = rsi.index[-1] - rsi.index[0]
     #print(time_elapsed)
     #profit_year = profit/(time_elapsed.days/365)
@@ -318,11 +327,14 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
         for item in new_buy:
             if (item - 1) in buy_inter1:
                 new_buy1.append(item)
-        plot_intersect(rsi.index,buy_line1, new_buy1, ax2, 'go')
+        if show_graph == True:
+            plot_intersect(rsi.index,buy_line1, new_buy1, ax2, 'go')
         if buy_open == True:
-            plot_intersect(rsi.index, prices['Adj Open'],new_buy1, ax1, 'gd')
+            if show_graph == True:
+                plot_intersect(rsi.index, prices['Adj Open'],new_buy1, ax1, 'gd')
         else:
-            plot_intersect(rsi.index,prices['Adj Close'], new_buy1, ax1, 'gd')
+            if show_graph == True:
+                plot_intersect(rsi.index,prices['Adj Close'], new_buy1, ax1, 'gd')
         
         for item in new_buy1:
                 new_buy.remove(item)
@@ -331,12 +343,14 @@ def main(stock_data, rsi_data, buy_rsi, sell_rsi,  *args, **kwargs):
         for item in new_sell:
             if (item - 1) in sell_inter1:
                 new_sell1.append(item)
-                
-        plot_intersect(rsi.index,sell_line1, new_sell1, ax2, 'ro')
+        if show_graph == True:
+            plot_intersect(rsi.index,sell_line1, new_sell1, ax2, 'ro')
         if sell_open == True:
-            plot_intersect(rsi.index, prices['Adj Open'],new_sell1, ax1, 'rd')
+            if show_graph == True:
+                plot_intersect(rsi.index, prices['Adj Open'],new_sell1, ax1, 'rd')
         else:
-            plot_intersect(rsi.index,prices['Adj Close'], new_sell1, ax1, 'rd')
+            if show_graph == True:
+                plot_intersect(rsi.index,prices['Adj Close'], new_sell1, ax1, 'rd')
         for item in new_sell1:
                 new_sell.remove(item)
 

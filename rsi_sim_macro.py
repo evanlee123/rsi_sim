@@ -16,7 +16,6 @@ def main(symbol_list,directory, *args, **kwargs):
     kwargs['return_profit'] = True
     if directory[-1] == '/':
         directory = directory[:-1]
-    print(kwargs)
     macro(symbol_list, directory, *args, **kwargs)
     
 
@@ -40,24 +39,25 @@ def macro(symbol_list, directory, *args, **kwargs):
     for item in file:
         if load_prog == True:
             if first_file == True:
+                #WHILE LOADING, SKIPS VALUES IN THE LIST UNTILL IT THE ITEM IN THE PROGRESS.CSV FILE MATCHES THE CURRENT ITEM IN FILE
                 load = pd.read_csv(directory + '/progress.csv')
                 value = list(load.columns.values)
                 if str(value[0]) != str(item):
-                    print(item)
-                    print(value[0])
-                    print('AA')
+                    print('Skipping: ' + str(item))
                     continue
                 if str(value[0]) == str(item):
-                    first_file = False                     
+                    print('Loaded at at: ' + str(item))
+                    first_file = False
+
+        #MAKES SURE THAT THE ITEM IN FILE IS AN ACTUALY TICKER SYMBOL
         if item.strip() != 'Symbol':
             string = directory + '/' + item.strip() + '-profit.csv'
+            #Writes the data for current file if file is the one left off on progress.csv or if no loading
             if load_prog == False or first_file == False:
-                with open(string, 'w', newline = '') as csvfile:
-                    writer = csv.writer(csvfile)
-                    fieldnames = ['Profit', 'Number of Transactions', 'Avg gain',
-                                  'Avg time for transaction', 'buy rsi', 'sell rsi']
-                    writer.writerow(fieldnames)
-                    csvfile.close()           
+                fieldnames = ['Profit', 'Number of Transactions', 'Avg gain',
+                              'Avg time for transaction', 'buy rsi', 'sell rsi']
+                write_row(string, 'w', fieldnames)
+
             buy_rsi = 0
             sell_rsi= 0
             price_file = directory + '/' + item.strip() + '.csv'
@@ -68,65 +68,58 @@ def macro(symbol_list, directory, *args, **kwargs):
             if load_prog == True:
                 profit = ast.literal_eval(value[3])
             if try_all_rsi == True:
-                print('AAAA')
+                print('Trying All RSI in range: ' + str(beg) +", " + str(end))
+                #THIS REPRESENT BUY VALUE CYCLING THROUGH
                 for number in range(beg,end):
+                    #makes sure that if loading, that it loads to the right buying rsi value
                     if load_prog== True and first_buy == True:
                         if str(number) != str(value[1]):
                             continue
                         if str(number) == str(value[1]):
                             first_buy = False
                     start_time = time.time()
-                    #if number % 10 == 0:
-                    
                     buy_rsi = number
+                    #THIS REPRESENTS SELL VALUE CYCLYING THROUGH
                     for integer in range(beg,end):
-                        
+                        #makes sure it is on the right selling rsi value if loading
                         if load_prog == True and first_sell == True:
                             if str(integer) != str(value[2]):
                                 continue
                             first_sell = False
                             print(value)
                         sell_rsi = integer
+                        #Writes the rsi value data into a csv file
                         try:
                             temp = call_sim(price_file, rsi_file, buy_rsi, sell_rsi, **kwargs)
                             temp += [buy_rsi,sell_rsi]
-                            #print(temp)
-                            fd = open(string, 'a', newline = '')
-                            writer = csv.writer(fd)
-                            writer.writerow(temp)
-                            fd.close()
+                            write_row(string, 'a', temp)
+                            #Saves current transaction to the progress csv is saving is enabled
                             if save_prog == True:
                                 if sell_rsi == end - 1:
                                     progress = [item, buy_rsi +1, beg, profit]
                                 else:
                                     progress = [item, buy_rsi, sell_rsi+1, profit]
-                                path = directory + '/progress.csv'
-                                fd = open(path, 'w', newline = '')
-                                writer = csv.writer(fd)
-                                writer.writerow(progress)
-                                fd.close()
+                                write_row(str(directory + '/progress.csv'),'w', progress)
+                                
                             if profit == []:
                                 profit = temp
                             elif float(profit[0]) < float(temp[0]):
                                 profit = temp
+                                
+                            #AT THIS POINT PROFIT SHOULD BE ONE OF THE TRANSACTIONS DONE
                         except TypeError:
+                            print("Type Error")
                             print(type(profit))
-                            #try:
-                            #    print('Type Error', temp, type(temp))
-                            #except UnboundLocalError:
-                            #    print('could not call the call_sim method')
-                            
                             
                         except SystemExit:
+                            print("Something tried to make the program exit")
                             pass
 
                     print(time.time() - start_time)
                 if max_profit == True:
-                    fd = open(string, 'w', newline = '')
-                    writer = csv.writer(fd)
-                    writer.writerow(profit)
-                    fd.close
-                            #print('There is an error(0)', 'buy: ', buy_rsi, ', sell: ', sell_rsi)
+                    write_row(string, 'a', profit)
+
+            #THIS IS IF SPECIFIED TO ONLY RUN ONE SPECIFIC BUY SELL RSI VALUE
             else:
                 buy_rsi = args[0]
                 sell_rsi = args[1]
@@ -134,30 +127,23 @@ def macro(symbol_list, directory, *args, **kwargs):
                     temp = call_sim(price_file, rsi_file,buy_rsi,sell_rsi, **kwargs)
                     temp += [buy_rsi,sell_rsi]
                     #print(temp)
-                    fd = open(string, 'a')
-                    writer = csv.writer(fd)
-                    writer.writerow(temp)
-                    fd.close()
+                    write_row(string, 'a', temp)
                     if save_progress == True:
                         if sell_rsi == end - 1:
                             progress = [item]
                         else:
                             progress = [item]
-                        path = directory + '/progress.csv'
-                        fd = open(path, 'a', newline = '')
-                        writer = csv.writer(fd)
-                        writer.writerow(progress)
-                        fd.close()
+                        write_row(str(directory + '/progress.csv'), 'a', progress)
                 except SystemExit:
                     print('There is an error(1)')
-            
-            #print(profit)
-            
-                        
-    
-    
-    pass
-
+                
 def call_sim(stock_data, rsi_data, buy_rsi, sell_rsi ,*args, **kwargs):
     return sim.main(stock_data, rsi_data, buy_rsi, sell_rsi, *args, **kwargs)
     pass
+
+#string is a string of the directory, write type is a string, field is a list
+def write_row(string, write_type, field):
+    with open(string, write_type, newline = '') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(field)
+        csvfile.close()  
